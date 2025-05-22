@@ -1,0 +1,157 @@
+# By Julia Minisi
+
+import tkinter as tk
+from tkinter import ttk
+import csv
+import io
+
+# Embedded CSV data
+WEAPON_CSV = """Weapon Name	Weapon Type	Heat	Damage	Min Range	Short Range	Medium Range	Long Range	Tonnage	Critical Slots	Shots per Ton
+SRM2	Missile	2	4	0	3	6	9	1	1	50
+SRM4	Missile	3	8	0	3	6	9	2	1	25
+SRM6	Missile	4	12	0	3	6	9	3	2	15
+Streak SRM2	Missile	2	4	0	3	6	9	1.5	1	50
+Streak SRM4	Missile	3	8	0	3	6	9	3	1	25
+Streak SRM6	Missile	4	12	0	3	6	9	4.5	2	15
+Thunderbolt 5	Missile	2	5	0	5	10	15	5	1	12
+Thunderbolt 10	Missile	4	10	0	5	10	15	7	2	6
+Thunderbolt 15	Missile	5	15	0	5	10	15	8	3	4
+Thunderbolt 20	Missile	6	20	0	5	10	15	10	4	3
+Arrow IV	Missile	10	20	0	6	12	21	15	15	5
+Vibroblade Small	Melee	0	3	0	0	0	0	0.5	1	0
+Vibroblade Medium	Melee	0	5	0	0	0	0	1	2	0
+Vibroblade Large	Melee	0	8	0	0	0	0	1.5	3	0
+Active Probe (Beagle)	Electronics	0	0	0	0	0	0	1.5	2	0
+Active Probe (Bloodhound)	Electronics	0	0	0	0	0	0	2	3	0
+Anti-Missile System	Defense	1	0	0	0	0	0	0.5	1	24
+Anti-Missile System (Laser)	Defense	2	0	0	0	0	0	1	1	24
+ECM Suite (Angel)	Electronics	0	0	0	0	0	0	2	2	0
+ECM Suite (Guardian)	Electronics	0	0	0	0	0	0	1.5	2	0
+M-Pod	Missile	0	5	0	1	2	3	0.5	1	1
+Target Acquisition Gear	Electronics	0	0	0	0	0	0	1	1	0
+Large Pulse Laser	Laser	10	9	0	3	6	10	7	2	0
+Small X-Pulse Laser	Laser	3	3	0	1	2	3	1	1	0
+Medium X-Pulse Laser	Laser	5	5	0	2	4	6	2	1	0
+Small Reengineered Laser	Laser	2	3	0	1	2	3	1	1	0
+Medium Reengineered Laser	Laser	4	5	0	2	4	6	2	1	0
+Large Reengineered Laser	Laser	6	8	0	3	6	9	5	2	0
+Small VSP Laser	Laser	3	3	0	1	2	3	1	1	0
+Medium VSP Laser	Laser	5	5	0	2	4	6	2	1	0
+Large VSP Laser	Laser	10	9	0	3	6	9	6	2	0
+"""
+
+# Load weapons from embedded CSV
+def load_weapons():
+    weapons = {}
+    csvfile = io.StringIO(WEAPON_CSV)
+    reader = csv.DictReader(csvfile, delimiter='\t')
+    for row in reader:
+        weapons[row['Weapon Name']] = row
+    return weapons
+
+# Compute total to-hit modifier
+def calculate_to_hit():
+    try:
+        base = int(base_skill.get())
+        attacker_move = int(attacker_movement.get())
+        target_move = int(target_movement.get())
+        terrain_mod = int(terrain.get())
+        heat_mod = int(heat.get())
+        height_mod = int(height_difference.get())
+        partial_cover_mod = 1 if partial_cover.get() else 0
+        forest_mod = 1 if light_forest.get() else 2 if heavy_forest.get() else 0
+        ice_mod = 3 if ice.get() else 0
+        mud_mod = 1 if mud.get() else 0
+        snow_mod = 1 if deep_snow.get() else 0
+        swamp_mod = 1 if swamp.get() else 0
+
+        total = base + attacker_move + target_move + terrain_mod + heat_mod + height_mod
+        total += partial_cover_mod + forest_mod + ice_mod + mud_mod + snow_mod + swamp_mod
+
+        result_var.set(f"To-Hit Number: {total}")
+    except ValueError:
+        result_var.set("Invalid input")
+
+# Update displayed weapon stats
+def update_weapon_stats(event=None):
+    selected = weapon_choice.get()
+    if selected in weapons:
+        w = weapons[selected]
+        stat_text = (
+            f"Type: {w['Weapon Type']}\n"
+            f"Heat: {w['Heat']} | Damage: {w['Damage']}\n"
+            f"Range: {w['Min Range']}/{w['Short Range']}/"
+            f"{w['Medium Range']}/{w['Long Range']}\n"
+            f"Tons: {w['Tonnage']} | Crits: {w['Critical Slots']}\n"
+            f"Shots/Ton: {w['Shots per Ton']}"
+        )
+        weapon_stats_var.set(stat_text)
+
+# GUI setup
+root = tk.Tk()
+root.title("BattleTech 3025 To-Hit Calculator 🤖")
+
+weapons = load_weapons()
+
+# Input fields
+ttk.Label(root, text="Gunnery Skill:").grid(row=0, column=0, sticky='e')
+base_skill = ttk.Entry(root)
+base_skill.grid(row=0, column=1)
+
+ttk.Label(root, text="Attacker Movement Mod:").grid(row=1, column=0, sticky='e')
+attacker_movement = ttk.Entry(root)
+attacker_movement.grid(row=1, column=1)
+
+ttk.Label(root, text="Target Movement Mod:").grid(row=2, column=0, sticky='e')
+target_movement = ttk.Entry(root)
+target_movement.grid(row=2, column=1)
+
+ttk.Label(root, text="Terrain Modifier:").grid(row=3, column=0, sticky='e')
+terrain = ttk.Entry(root)
+terrain.grid(row=3, column=1)
+
+ttk.Label(root, text="Heat Modifier:").grid(row=4, column=0, sticky='e')
+heat = ttk.Entry(root)
+heat.grid(row=4, column=1)
+
+ttk.Label(root, text="Height Difference:").grid(row=5, column=0, sticky='e')
+height_difference = ttk.Entry(root)
+height_difference.grid(row=5, column=1)
+
+# Checkbuttons
+partial_cover = tk.BooleanVar()
+ttk.Checkbutton(root, text="Partial Cover (+1)", variable=partial_cover).grid(row=6, column=0, columnspan=2)
+
+light_forest = tk.BooleanVar()
+ttk.Checkbutton(root, text="Light Forest (+1)", variable=light_forest).grid(row=7, column=0, columnspan=2)
+
+heavy_forest = tk.BooleanVar()
+ttk.Checkbutton(root, text="Heavy Forest (+2)", variable=heavy_forest).grid(row=8, column=0, columnspan=2)
+
+ice = tk.BooleanVar()
+ttk.Checkbutton(root, text="Ice (+3)", variable=ice).grid(row=9, column=0, columnspan=2)
+
+mud = tk.BooleanVar()
+ttk.Checkbutton(root, text="Mud (+1)", variable=mud).grid(row=10, column=0, columnspan=2)
+
+deep_snow = tk.BooleanVar()
+ttk.Checkbutton(root, text="Deep Snow (+1)", variable=deep_snow).grid(row=11, column=0, columnspan=2)
+
+swamp = tk.BooleanVar()
+ttk.Checkbutton(root, text="Swamp (+1)", variable=swamp).grid(row=12, column=0, columnspan=2)
+
+# Weapon selector
+ttk.Label(root, text="Select Weapon:").grid(row=0, column=2, padx=(20, 0))
+weapon_choice = ttk.Combobox(root, values=list(weapons.keys()), state="readonly", width=30)
+weapon_choice.grid(row=1, column=2, padx=(20, 0))
+weapon_choice.bind("<<ComboboxSelected>>", update_weapon_stats)
+
+weapon_stats_var = tk.StringVar()
+ttk.Label(root, textvariable=weapon_stats_var, justify="left").grid(row=2, column=2, rowspan=8, sticky='nw', padx=(20, 0))
+
+# Result label and button
+result_var = tk.StringVar()
+ttk.Label(root, textvariable=result_var, font=('Helvetica', 14)).grid(row=13, column=0, columnspan=3, pady=10)
+ttk.Button(root, text="Calculate", command=calculate_to_hit).grid(row=14, column=0, columnspan=3, pady=10)
+
+root.mainloop()
